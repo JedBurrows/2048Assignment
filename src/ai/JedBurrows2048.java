@@ -8,6 +8,7 @@ import java.util.List;
 public class JedBurrows2048 extends AbstractPlayer {
     @Override
     public AbstractState.MOVE getMove(State game) {
+        return null;
     }
 
     @Override
