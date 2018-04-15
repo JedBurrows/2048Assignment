@@ -8,57 +8,53 @@ import java.util.List;
 public class JedBurrows2048 extends AbstractPlayer {
     private int alpha;
     private int beta;
-    private int value;
+    private int bestScore;
+    private AbstractState.MOVE bestMove;
     @Override
     public AbstractState.MOVE getMove(State game) {
+        bestScore = 0;
+        bestMove = null;
         pause();
-
-        List<AbstractState.MOVE> moves = game.getMoves();
         maxValue(game);
-        AbstractState.MOVE bestMove = null;
         return bestMove;
     }
 
     private int maxValue(State game) {
         int v;
         if(game.getNumberOfEmptyCells() == 0){
-            return 0;
+            return bestScore;
         }
-        value = Integer.MIN_VALUE;
-        for(State s : game.nextFirstHalfMoveStates()){
-            v = minValue(s);
-            if(v > value){
-                value = v;
-            }
-            if(v >= beta){
-                return value;
-            }
-            if(v > alpha){
-                alpha = v;
+        System.out.println("Empty cells: " + game.getNumberOfEmptyCells());
+        bestScore = Integer.MIN_VALUE;
+        for(AbstractState.MOVE move : game.getMoves()){
+            v = minValue(game);
+            if(v > bestScore){
+                bestScore = v;
+                bestMove = move;
             }
         }
-        return value;
+        return bestScore;
     }
 
     private int minValue(State game){
         int v;
         if(game.getNumberOfEmptyCells() == 0){
-            return 0;
+            return bestScore;
         }
-        value = Integer.MAX_VALUE;
+        bestScore = Integer.MAX_VALUE;
         for(State s : game.nextFirstHalfMoveStates()){
             v = maxValue(s);
-            if(v < value){
-                value = v;
+            if(v < bestScore){
+                bestScore = v;
             }
             if(v <= alpha){
-                return value;
+                return bestScore;
             }
             if(v < beta){
                 beta = v;
             }
         }
-        return value;
+        return bestScore;
     }
 
     @Override
