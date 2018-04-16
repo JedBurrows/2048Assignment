@@ -1,6 +1,7 @@
 package ai;
 
 import model.AbstractState;
+import model.BinaryState;
 import model.State;
 
 import java.util.List;
@@ -8,54 +9,62 @@ import java.util.List;
 public class JedBurrows2048 extends AbstractPlayer {
     private int alpha;
     private int beta;
-    private int bestScore;
     private AbstractState.MOVE bestMove;
     @Override
     public AbstractState.MOVE getMove(State game) {
-        bestScore = 0;
         bestMove = null;
         pause();
-        maxValue(game);
+        minimax(game,false);
         return bestMove;
     }
-
-    private int maxValue(State game) {
-        int v;
-        if(game.getNumberOfEmptyCells() == 0){
-            return bestScore;
+    private int minimax(State game,boolean isAI){
+        int bestScore;
+        List<AbstractState.MOVE> moves = game.getMoves();
+        if(moves.isEmpty()){
+            return game.getScore();
         }
-        System.out.println("Empty cells: " + game.getNumberOfEmptyCells());
-        bestScore = Integer.MIN_VALUE;
-        for(AbstractState.MOVE move : game.getMoves()){
-            v = minValue(game);
-            if(v > bestScore){
-                bestScore = v;
-                bestMove = move;
+        else{
+            if(!isAI){
+                bestScore = Integer.MIN_VALUE;
+                State[] states = game.nextFirstHalfMoveStates();
+                for(int i=0;i<states.length;i++){
+                    int currentResult = minimax(states[i],true);
+                    if(currentResult > bestScore){
+                        bestScore = currentResult;
+                        bestMove = moveFromState(i);
+                    }
+                }
+            }
+            else{
+                bestScore = Integer.MAX_VALUE;
+                if(game.getNumberOfEmptyCells() == 0){
+                    bestScore = 0;
+                }
+                for(State state : game.nextSecondHalfMoveStates()){
+                    int currentResult = minimax(state,false);
+                    if(currentResult < bestScore){
+                        bestScore = currentResult;
+                    }
+                }
             }
         }
         return bestScore;
     }
 
-    private int minValue(State game){
-        int v;
-        if(game.getNumberOfEmptyCells() == 0){
-            return bestScore;
+    private AbstractState.MOVE moveFromState(int i){
+        switch (i){
+            case 0:
+                return AbstractState.MOVE.UP;
+            case 1:
+                return AbstractState.MOVE.RIGHT;
+            case 2:
+                return AbstractState.MOVE.LEFT;
+            case 3:
+                return AbstractState.MOVE.DOWN;
         }
-        bestScore = Integer.MAX_VALUE;
-        for(State s : game.nextFirstHalfMoveStates()){
-            v = maxValue(s);
-            if(v < bestScore){
-                bestScore = v;
-            }
-            if(v <= alpha){
-                return bestScore;
-            }
-            if(v < beta){
-                beta = v;
-            }
-        }
-        return bestScore;
+        return AbstractState.MOVE.LEFT;
     }
+
 
     @Override
     public int studentID() {
