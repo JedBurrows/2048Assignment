@@ -1,10 +1,9 @@
 package ai;
 
-import eval.BonusEvaluator;
-import eval.Evaluator;
 import model.AbstractState;
 import model.State;
 import java.util.List;
+import java.util.Random;
 
 public class JedBurrows2048 extends AbstractPlayer {
     private int depth;
@@ -15,17 +14,37 @@ public class JedBurrows2048 extends AbstractPlayer {
     @Override
     public AbstractState.MOVE getMove(State game) {
         pause();
-        iterations = 1000;
-        bestScore = Double.NEGATIVE_INFINITY;
+        iterations = 300;
+        depth = 200;
+        bestScore = Double.MIN_VALUE;
         List<AbstractState.MOVE> moves = game.getMoves();
         for (AbstractState.MOVE move : moves){
-            double score = runSimulation(move, game);
-            if(score > bestScore){
+            double score = findBestMove(move, game);
+            if(bestScore < score){
                 bestScore = score;
                 bestMove = move;
             }
         }
         return bestMove;
+    }
+
+    private double findBestMove(AbstractState.MOVE move, State start) {
+        int score = 0;
+        for(int i = 0; i < iterations; i++){
+            State copy = start.copy();
+            copy.move(move);
+            for(int ii=0; ii < depth && !copy.getMoves().isEmpty(); ii++){
+                List<AbstractState.MOVE> moves = copy.getMoves();
+                AbstractState.MOVE bestNextMove = moves.get(new Random().nextInt(moves.size()));
+                copy.move(bestNextMove);
+            }
+            score += copy.getScore();
+        }
+        return (calcAvgScore(score));
+    }
+
+    private double calcAvgScore(double score){
+        return score/iterations;
     }
 
     @Override
@@ -36,24 +55,5 @@ public class JedBurrows2048 extends AbstractPlayer {
     @Override
     public String studentName() {
         return "Jed Burrows";
-    }
-
-    private double runSimulation(AbstractState.MOVE move, State node) {
-        int score = 0;
-        int currentDepth;
-        for(int i = 0; i < iterations; i++){
-            State copy = node.copy();
-            copy.move(move);
-            for(currentDepth = 0; currentDepth < depth && !copy.getMoves().isEmpty(); currentDepth++){
-                double best = Double.NEGATIVE_INFINITY;
-                List<AbstractState.MOVE> moves = copy.getMoves();
-                AbstractState.MOVE bestNextMove = moves.get((int) Math.random() * moves.size());
-                copy.move(bestNextMove);
-            }
-            score += copy.getScore();
-            copy.undo();
-        }
-
-        return (score/iterations);
     }
 }
